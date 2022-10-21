@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>kvapi example</title>
+        <meta charset="utf-8" />
+        <script type="text/javascript" src="kvapi-client.js"></script>
+        <style type="text/css">
+            body {
+                font-family: "Segoe UI";
+                font-size: 16px;
+                padding: 20px 80px 80px 80px;
+            }
+            #instructions {
+                margin-top: 50px;
+                font-size: 18px;
+            }
+            #instructions li {
+                margin: 10px 0;
+            }
+            #instructions code {
+                background-color: #f5f5f5;
+                padding: 3px 5px;
+                border-radius: 3px;
+                font-size: 16px;
+            }
+            .output {
+                font-family: Consolas, monospace;
+                white-space: pre;
+                padding: 20px;
+                border: 1px dashed #ccc;
+                border-radius: 5px;
+                overflow: auto;
+                max-height: 500px;
+            }
+            .output.error {
+                color: #f34949;
+            }
+            h3 {
+                font-weight: 100;
+                font-size: 30px;
+            }
+            h3 {
+                margin-bottom: 10px;
+            }
+            body>div:not(:first-child) h3 {
+                margin-top: 50px;
+            }
+            .controls {
+                margin: 0 0 20px 0;
+            }
+            .controls > div {
+                margin: 10px 0;
+                background: #f5f5f5;
+                padding: 20px;
+                border-radius: 5px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            input,
+            textarea,
+            select {
+                color: #000;
+                background: #fff;
+                border: 1px solid #ccc;
+                padding: 5px 10px;
+                border-radius: 3px;
+                outline: none;
+            }
+            input:focus,
+            textarea:focus {
+                border-color: #007acc;
+            }
+            button {
+                color: #fff;
+                background: #007acc;
+                border: 0;
+                padding: 5px 10px;
+                border-radius: 3px;
+                outline: none;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #008add;
+            }
+            button:active {
+                background-color: #006abb;
+            }
+            textarea {
+                width: 400px;
+                height: 80px;
+            }
+        </style>
+    </head>
+    <body>
+        <ul id="instructions">
+            <li>Use these forms to trigger requests.</li>
+            <li>Responses will be rendered at the bottom of each form group.</li>
+            <li>For <code>users.delete()</code>, <code>entries.set()</code> and <code>entries.delete()</code> methods an additional <code>getAll()</code> call will be made and it's result will be rendered.</li>
+            <li>Please read docs to find out more about available api methods.</li>
+        </ul>
+        <p>  </p>
+        <div id="app-info">
+            <h3>app-info</h3>
+            <div class="controls">
+                <div>
+                    <button id="app-info--get">get()</button>
+                </div>
+            </div>
+            <div class="output"></div>
+        </div>
+        <div id="sessions">
+            <h3>sessions</h3>
+            <div class="controls">
+                <div>
+                    <input type="text" placeholder="Login" id="sessions--create--user-login" />
+                    <input type="text" placeholder="Password" id="sessions--create--user-password" />
+                    <button id="sessions--create">create()</button>
+                </div>
+                <div>
+                    <button id="sessions--update">update()</button>
+                </div>
+                <div>
+                    <button id="sessions--delete">delete()</button>
+                </div>
+            </div>
+            <div class="output"></div>
+        </div>
+        <div id="users">
+            <h3>users</h3>
+            <div class="controls">
+                <div>
+                    <button id="users--get-all">getAll()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="ID" id="users--get--user-id" />
+                    <button id="users--get">get()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Login" id="users--create--user-login" />
+                    <input type="text" placeholder="Password" id="users--create--user-password" />
+                    <select id="users--create--user-role">
+                        <option value="authorized">Regular</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button id="users--create">create()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="ID" id="users--update--user-id" />
+                    <input type="text" placeholder="Login" id="users--update--user-login" />
+                    <input type="text" placeholder="Password" id="users--update--user-password" />
+                    <select id="users--update--user-role">
+                        <option value="authorized">Regular</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button id="users--update">update()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="ID" id="users--delete--user-id" />
+                    <button id="users--delete">delete()</button>
+                </div>
+            </div>
+            <div class="output"></div>
+        </div>
+        <div id="public-entries">
+            <h3>public-entries</h3>
+            <div class="controls">
+                <div>
+                    <button id="public-entries--get-all">getAll()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="public-entries--get--key" />
+                    <button id="public-entries--get">get()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="public-entries--set--key" />
+                    <input type="text" placeholder="Value" id="public-entries--set--value" />
+                    <button id="public-entries--set">set()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="public-entries--delete--key" />
+                    <button id="public-entries--delete">delete()</button>
+                </div>
+                <div>
+                    <textarea placeholder="Keys (separator: comma or space)" id="public-entries--get-batched--keys"></textarea>
+                    <button id="public-entries--get-batched">batched get()</button>
+                </div>
+            </div>
+            <div class="output"></div>
+        </div>
+        <div id="private-entries">
+            <h3>private-entries</h3>
+            <div class="controls">
+                <div>
+                    <button id="private-entries--get-all">getAll()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="private-entries--get--key" />
+                    <button id="private-entries--get">get()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="private-entries--set--key" />
+                    <input type="text" placeholder="Value" id="private-entries--set--value" />
+                    <button id="private-entries--set">set()</button>
+                </div>
+                <div>
+                    <input type="text" placeholder="Key" id="private-entries--delete--key" />
+                    <button id="private-entries--delete">delete()</button>
+                </div>
+                <div>
+                    <textarea placeholder="Keys (separator: comma or space)" id="private-entries--get-batched--keys"></textarea>
+                    <button id="private-entries--get-batched">batched get()</button>
+                </div>
+            </div>
+            <div class="output"></div>
+        </div>
+        <script type="text/javascript">
+            function transformOutput(output) {
+                const isError = output instanceof Error;
+                if (isError) {
+                    try {
+                        output = JSON.parse(output.message);
+                    }
+                    catch {
+                        output = output.message;
+                    }
+                }
+                if (typeof(output) === "object") {
+                    output = JSON.stringify(output, undefined, "    ");
+                }
+                else if (typeof(output) === "function") {
+                    output = output.toString();
+                }
+                else if (typeof(output) === "undefined") {
+                    output = "undefined";
+                }
+                return { output, isError };
+            }
+            function setOutput(id, rawOutput) {
+                const { output, isError} = transformOutput(rawOutput);
+                const $output = document.getElementById(id).querySelector(".output");
+                $output.textContent = output;
+                $output.classList.toggle("error", !!isError);
+            }
+            function emptyStrToUndefined(str) {
+                if (str.length === 0) {
+                    return undefined;
+                }
+                return str;
+            }
+            
+            let session = undefined;
+            const api = new KvapiClient.Api("/api", { e2ee: true });
+            
+            // app-info
+            function appInfo_get() {
+                setOutput("app-info", "");
+                api.appInfo.get().then(appInfo => setOutput("app-info", appInfo)).catch(err => setOutput("app-info", err));
+            }
+            document.querySelector("#app-info--get").addEventListener("click", () => appInfo_get());
+            appInfo_get();
+            
+            // sessions
+            function session_render() {
+                setOutput("sessions", session);
+            }
+            function sessions_create() {
+                setOutput("sessions", "");
+                api.sessions.create(document.querySelector("#sessions--create--user-login").value, document.querySelector("#sessions--create--user-password").value).then(newSession => {
+                    session = newSession;
+                    session_render();
+                })
+                .catch(err => setOutput("sessions", err));
+            }
+            function sessions_update() {
+                api.sessions.update().catch(err => setOutput("sessions", err));
+            }
+            function sessions_delete() {
+                api.sessions.delete().then(() => {
+                    session = undefined;
+                    session_render();
+                })
+                .catch(err => setOutput("sessions", err));
+            }
+            document.querySelector("#sessions--create").addEventListener("click", () => sessions_create());
+            document.querySelector("#sessions--update").addEventListener("click", () => sessions_update());
+            document.querySelector("#sessions--delete").addEventListener("click", () => sessions_delete());
+            session_render();
+            
+            // users
+            function users_getAll() {
+                setOutput("users", "");
+                api.users.getAll().then(users => setOutput("users", users)).catch(err => setOutput("users", err));
+            }
+            function users_get() {
+                api.users.get(document.querySelector("#users--get--user-id").value).then(user => setOutput("users", user)).catch(err => setOutput("users", err));
+            }
+            function users_create() {
+                api.users.create({
+                    login: document.querySelector("#users--create--user-login").value,
+                    password: document.querySelector("#users--create--user-password").value,
+                    role: document.querySelector("#users--create--user-role").value,
+                }).then(newUser => {
+                    setOutput("users", newUser);
+                })
+                .catch(err => setOutput("users", err));
+            }
+            function users_update() {
+                api.users.update(document.querySelector("#users--update--user-id").value, {
+                    login: emptyStrToUndefined(document.querySelector("#users--update--user-login").value),
+                    password: emptyStrToUndefined(document.querySelector("#users--update--user-password").value),
+                    role: emptyStrToUndefined(document.querySelector("#users--update--user-role").value),
+                }).then(newUser => {
+                    setOutput("users", newUser);
+                })
+                .catch(err => setOutput("users", err));
+            }
+            function users_delete() {
+                api.users.delete(document.querySelector("#users--delete--user-id").value).then(() => users_getAll()).catch(err => setOutput("users", err));
+            }
+            document.querySelector("#users--get-all").addEventListener("click", () => users_getAll());
+            document.querySelector("#users--get").addEventListener("click", () => users_get());
+            document.querySelector("#users--create").addEventListener("click", () => users_create());
+            document.querySelector("#users--update").addEventListener("click", () => users_update());
+            document.querySelector("#users--delete").addEventListener("click", () => users_delete());
+            users_getAll();
+            
+            // *-entries
+            const entriesApis = {
+                "public": api.publicEntries,
+                "private": api.privateEntries,
+            };
+            for (const prefix in entriesApis) {
+                const entriesApi = api[`${prefix}Entries`];
+                const entries_getAll = () => {
+                    entriesApi.getAll().then(entries => setOutput(`${prefix}-entries`, entries)).catch(err => setOutput(`${prefix}-entries`, err));
+                };
+                const entries_get = () => {
+                    const key = document.querySelector(`#${prefix}-entries--get--key`).value;
+                    entriesApi.get(key).then(value => setOutput(`${prefix}-entries`, { key, value })).catch(err => setOutput(`${prefix}-entries`, err));
+                };
+                const entries_set = () => {
+                    const key = document.querySelector(`#${prefix}-entries--set--key`).value;
+                    const value = document.querySelector(`#${prefix}-entries--set--value`).value;
+                    entriesApi.set(key, value).then(() => entries_getAll()).catch(err => setOutput(`${prefix}-entries`, err));
+                };
+                const entries_delete = () => {
+                    const key = document.querySelector(`#${prefix}-entries--delete--key`).value;
+                    entriesApi.delete(key).then(() => entries_getAll()).catch(err => setOutput(`${prefix}-entries`, err));
+                };
+                const entries_getBatched = async () => {
+                    const keysRawStr = document.querySelector(`#${prefix}-entries--get-batched--keys`).value;
+                    const keys = keysRawStr.split(/[\s,]+/g).filter(key => key.length > 0);
+                    if (keys.length === 0) {
+                        return;
+                    }
+                    const batchedApi = api.createBatchedApi();
+                    const entriesBatchedApi = batchedApi[`${prefix}Entries`];
+                    let outputs = [];
+                    for (const key of keys) {
+                        entriesBatchedApi.get(key)
+                            .then(value => {
+                                outputs.push({ key, value });
+                                setOutput(`${prefix}-entries`, outputs);
+                            })
+                            .catch(err => {
+                                outputs.push(err);
+                                setOutput(`${prefix}-entries`, outputs);
+                            });
+                    }
+                    batchedApi.executeBatch();
+                };
+                document.querySelector(`#${prefix}-entries--get-all`).addEventListener("click", () => entries_getAll());
+                document.querySelector(`#${prefix}-entries--get`).addEventListener("click", () => entries_get());
+                document.querySelector(`#${prefix}-entries--set`).addEventListener("click", () => entries_set());
+                document.querySelector(`#${prefix}-entries--delete`).addEventListener("click", () => entries_delete());
+                document.querySelector(`#${prefix}-entries--get-batched`).addEventListener("click", () => entries_getBatched());
+                entries_getAll();
+            }
+        </script>
+    </body>
+</html>

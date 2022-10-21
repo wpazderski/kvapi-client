@@ -1,0 +1,34 @@
+{
+    "name": "@wpazderski/kvapi-client",
+    "version": "1.0.0",
+    "description": "Client library for kvapi server",
+    "author": "Witold Pazderski",
+    "license": "MIT",
+    "homepage": "https://github.com/wpazderski/kvapi-client#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/wpazderski/kvapi-client.git"
+    },
+    "bugs": {
+        "url": "https://github.com/wpazderski/kvapi-client/issues"
+    },
+    "main": "dist/kvapi-client.min.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist/**/*"
+    ],
+    "scripts": {
+        "build-dev": "npx webpack",
+        "build-prod": "npx webpack --env production",
+        "watch-dev": "npx webpack --watch",
+        "watch-prod": "npx webpack --env production --watch"
+    },
+    "devDependencies": {
+        "@wpazderski/kvapi-types": "git+https://github.com/wpazderski/kvapi-types.git",
+        "filemanager-webpack-plugin": "^7.0.0",
+        "ts-loader": "^9.4.1",
+        "typescript": "^4.8.4",
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0"
+    }
+}
