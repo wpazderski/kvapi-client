@@ -13,6 +13,7 @@ export interface GenericApiOptions {
     batchMode: boolean;
     e2ee: boolean;
     commonHeadersProvider: () => RequestHeaders;
+    onRequestError: ((error: Error) => void) | null;
 }
 
 export class GenericApi {
@@ -38,6 +39,7 @@ export class GenericApi {
             batchMode: false,
             e2ee: false,
             commonHeadersProvider: () => ({}),
+            onRequestError: null,
             ...options,
         };
         if (this.baseUrl && !this.baseUrl.endsWith("/")) {
@@ -127,21 +129,34 @@ export class GenericApi {
             ...this.options.commonHeadersProvider(),
             "Content-Type": "application/json",
         };
-        const response = await fetch(this.getFullUrl(url), {
-            method: method.toUpperCase(),
-            headers,
-            body: data !== undefined ? JSON.stringify(data) : null,
-        });
-        if (response.status === 200) {
-            return await response.json();
-        }
-        else {
-            let details: any;
-            try {
-                details = await response.json();
+        try {
+            const response = await fetch(this.getFullUrl(url), {
+                method: method.toUpperCase(),
+                headers,
+                body: data !== undefined ? JSON.stringify(data) : null,
+            });
+            if (response.status === 200) {
+                return await response.json();
             }
-            catch {}
-            throw new ServerError(response.status, response.statusText, details);
+            else {
+                let details: any;
+                try {
+                    details = await response.json();
+                }
+                catch {}
+                throw new ServerError(response.status, response.statusText, details);
+            }
+        }
+        catch (error) {
+            if (error instanceof Error && this.options.onRequestError) {
+                try {
+                    this.options.onRequestError(error);
+                }
+                catch (callbackError) {
+                    console.error(callbackError);
+                }
+            }
+            throw error;
         }
     }
     
