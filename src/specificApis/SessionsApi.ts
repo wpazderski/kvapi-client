@@ -13,11 +13,12 @@ export class SessionsApi {
     }
     
     async create(userLogin: Types.data.user.Login, userPassword: Types.data.user.PlainPassword): Promise<Types.api.sessions.CreateSessionResponse> {
+        const plainUserPassword = userPassword;
         userPassword = await Encryption.sha512(userPassword);
         const request: Types.api.sessions.CreateSessionRequest = { userLogin, userPassword };
         const response: Types.api.sessions.CreateSessionResponse = await this.genericApi.post("sessions", request, false);
         if (response && response.id) {
-            await this.options.onSessionStarted(response, userPassword);
+            await this.options.onSessionStarted(response, plainUserPassword);
         }
         return response;
     }

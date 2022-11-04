@@ -114,7 +114,7 @@ export class Api {
             this.genericApi,
             {
                 onBeforeUserUpdated: async (userId, request) => this.onBeforeUserUpdated(userId, request),
-                onUserUpdated: async user => this.onUserUpdated(user),
+                onUserUpdated: async (user, plainPassword) => this.onUserUpdated(user, plainPassword),
             },
         );
     }
@@ -151,19 +151,6 @@ export class Api {
         this.genericApi.disposeEncryption();
     }
     
-    private async onUserUpdated(user: Types.data.user.UserPublic | Types.data.user.UserWithoutPassword): Promise<void> {
-        if (!this.user) {
-            return;
-        }
-        if (user.id !== this.user.id) {
-            return;
-        }
-        this.user = {
-            ...this.user,
-            ...user,
-        };
-    }
-    
     private async onBeforeUserUpdated(userId: Types.data.user.Id, request: Types.api.users.UpdateUserRequest): Promise<void> {
         if (!this.user) {
             return;
@@ -196,8 +183,25 @@ export class Api {
             privateData = JSON.parse(await oldPasswordBasedEncryption.decrypt(this.user.privateData!));
         }
         const privateDataStr = await newPasswordBasedEncryption.encrypt(JSON.stringify(privateData)) as Types.data.user.PrivateData;
-        this.userPasswordBasedEncryption = newPasswordBasedEncryption;
         request.privateData = privateDataStr;
+    }
+    
+    private async onUserUpdated(user: Types.data.user.UserPublic | Types.data.user.UserWithoutPassword, plainPassword?: Types.data.user.PlainPassword): Promise<void> {
+        if (!this.user) {
+            return;
+        }
+        if (user.id !== this.user.id) {
+            return;
+        }
+        if (this.genericApi.isE2EEncrypted() && plainPassword) {
+            const newPasswordBasedKey = await Encryption.generateKeyFromPassword(plainPassword);
+            const newPasswordBasedEncryption = new Encryption(newPasswordBasedKey);
+            this.userPasswordBasedEncryption = newPasswordBasedEncryption;
+        }
+        this.user = {
+            ...this.user,
+            ...user,
+        };
     }
     
     createBatchedApi(): Api {

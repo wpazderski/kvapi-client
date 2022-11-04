@@ -54,7 +54,7 @@ class Api {
         });
         this._usersApi = new UsersApi_1.UsersApi(this.genericApi, {
             onBeforeUserUpdated: async (userId, request) => this.onBeforeUserUpdated(userId, request),
-            onUserUpdated: async (user) => this.onUserUpdated(user),
+            onUserUpdated: async (user, plainPassword) => this.onUserUpdated(user, plainPassword),
         });
     }
     get appInfo() {
@@ -138,18 +138,6 @@ class Api {
         this.userPasswordBasedEncryption = null;
         this.genericApi.disposeEncryption();
     }
-    async onUserUpdated(user) {
-        if (!this.user) {
-            return;
-        }
-        if (user.id !== this.user.id) {
-            return;
-        }
-        this.user = {
-            ...this.user,
-            ...user,
-        };
-    }
     async onBeforeUserUpdated(userId, request) {
         if (!this.user) {
             return;
@@ -181,8 +169,24 @@ class Api {
             privateData = JSON.parse(await oldPasswordBasedEncryption.decrypt(this.user.privateData));
         }
         const privateDataStr = await newPasswordBasedEncryption.encrypt(JSON.stringify(privateData));
-        this.userPasswordBasedEncryption = newPasswordBasedEncryption;
         request.privateData = privateDataStr;
+    }
+    async onUserUpdated(user, plainPassword) {
+        if (!this.user) {
+            return;
+        }
+        if (user.id !== this.user.id) {
+            return;
+        }
+        if (this.genericApi.isE2EEncrypted() && plainPassword) {
+            const newPasswordBasedKey = await Encryption_1.Encryption.generateKeyFromPassword(plainPassword);
+            const newPasswordBasedEncryption = new Encryption_1.Encryption(newPasswordBasedKey);
+            this.userPasswordBasedEncryption = newPasswordBasedEncryption;
+        }
+        this.user = {
+            ...this.user,
+            ...user,
+        };
     }
     createBatchedApi() {
         return new Api(this.baseUrl, { ...this.options, batchMode: true }, this);
@@ -774,11 +778,12 @@ class SessionsApi {
         this.options = options;
     }
     async create(userLogin, userPassword) {
+        const plainUserPassword = userPassword;
         userPassword = await Encryption_1.Encryption.sha512(userPassword);
         const request = { userLogin, userPassword };
         const response = await this.genericApi.post("sessions", request, false);
         if (response && response.id) {
-            await this.options.onSessionStarted(response, userPassword);
+            await this.options.onSessionStarted(response, plainUserPassword);
         }
         return response;
     }
@@ -837,6 +842,7 @@ class UsersApi {
         if (!userId) {
             throw new errors_1.InvalidParamError("userId");
         }
+        const plainPassword = request.password;
         const result = await this.genericApi.buildRequestAsynchronously(async () => {
             request = { ...request };
             await this.options.onBeforeUserUpdated(userId, request);
@@ -852,7 +858,7 @@ class UsersApi {
                 role: result.user.role,
                 lastPasswordUpdateTimestamp: result.user.lastPasswordUpdateTimestamp,
                 privateData: result.user.privateData,
-            });
+            }, plainPassword);
         }
         else {
             this.options.onUserUpdated({

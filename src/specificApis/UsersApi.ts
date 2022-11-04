@@ -5,7 +5,7 @@ import { GenericApi } from "../GenericApi";
 
 export interface UsersApiOptions {
     onBeforeUserUpdated: (userId: Types.data.user.Id, request: Types.api.users.UpdateUserRequest) => Promise<void>;
-    onUserUpdated: (user: Types.data.user.UserPublic | Types.data.user.UserWithoutPassword) => Promise<void>;
+    onUserUpdated: (user: Types.data.user.UserPublic | Types.data.user.UserWithoutPassword, plainPassword?: Types.data.user.PlainPassword) => Promise<void>;
 }
 
 export class UsersApi {
@@ -42,6 +42,7 @@ export class UsersApi {
         if (!userId) {
             throw new InvalidParamError("userId");
         }
+        const plainPassword = request.password;
         const result: Types.api.users.UpdateUserResponse = await this.genericApi.buildRequestAsynchronously(async () => {
             request = { ...request };
             await this.options.onBeforeUserUpdated(userId, request);
@@ -51,13 +52,16 @@ export class UsersApi {
             return () => this.genericApi.patch(`users/${userId}`, request);
         });
         if ("privateData" in result.user) {
-            this.options.onUserUpdated({
-                id: userId,
-                login: result.user.login,
-                role: result.user.role,
-                lastPasswordUpdateTimestamp: result.user.lastPasswordUpdateTimestamp,
-                privateData: result.user.privateData,
-            });
+            this.options.onUserUpdated(
+                {
+                    id: userId,
+                    login: result.user.login,
+                    role: result.user.role,
+                    lastPasswordUpdateTimestamp: result.user.lastPasswordUpdateTimestamp,
+                    privateData: result.user.privateData,
+                },
+                plainPassword,
+            );
         }
         else {
             this.options.onUserUpdated({
